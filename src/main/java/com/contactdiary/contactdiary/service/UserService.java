@@ -19,7 +19,7 @@ public class UserService {
 
         // check if email already exists
         if(repo.findByEmail(user.getEmail()).isPresent()){
-            throw new RuntimeException("Email already registered!");
+            throw new RuntimeException("Email already registered! please login. ");
         }
 
         return repo.save(user);
