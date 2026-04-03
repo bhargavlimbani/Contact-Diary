@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Diary</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <!-- REGISTER -->
+    <div id="registerPage" class="card p-4 shadow">
+        <h3 class="text-center">Register</h3>
+
+        <input class="form-control mb-2" id="rname" placeholder="Name">
+        <input class="form-control mb-2" id="remail" placeholder="Email">
+        <input class="form-control mb-2" id="rpass" placeholder="Password">
+
+        <button class="btn btn-primary w-100" onclick="register()">Register</button>
+
+        <p class="mt-2 text-center">
+            Already have account?
+            <a href="#" onclick="showLogin()">Login</a>
+        </p>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginPage" class="card p-4 shadow" style="display:none;">
+        <h3 class="text-center">Login</h3>
+
+        <input class="form-control mb-2" id="lemail" placeholder="Email">
+        <input class="form-control mb-2" id="lpass" placeholder="Password">
+
+        <button class="btn btn-success w-100" onclick="login()">Login</button>
+
+        <p class="mt-2 text-center">
+            New user?
+            <a href="#" onclick="showRegister()">Register</a>
+        </p>
+    </div>
+
+    <!-- HOME -->
+    <div id="homePage" style="display:none;">
+
+        <div class="d-flex justify-content-between mb-3">
+            <h3>My Contacts</h3>
+            <button class="btn btn-succes me-2" onclick="newContact()">+ add New</button>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="card p-3 shadow mb-3">
+            <h5>Add / Edit Contact</h5>
+
+            <input class="form-control mb-2" id="cname" placeholder="Name">
+            <input class="form-control mb-2" id="cphone" placeholder="Phone" maxlength="10">
+            <input class="form-control mb-2" id="cemail" placeholder="Email">
+            <input class="form-control mb-2" id="caddress" placeholder="Address">
+
+            <button class="btn btn-primary w-100" onclick="addContact()">Save Contact</button>
+        </div>
+
+        <ul id="list" class="list-group"></ul>
+
+    </div>
+
+</div>
+
+<script>
+
+    let userId = null;
+    let editId = null;
+
+    // ================= PAGE SWITCH =================
+    function showLogin(){
+        registerPage.style.display = "none";
+        loginPage.style.display = "block";
+    }
+
+    function showRegister(){
+        loginPage.style.display = "none";
+        registerPage.style.display = "block";
+    }
+
+    // ================= REGISTER =================
+    function register(){
+
+        if(rname.value === "" || remail.value === "" || rpass.value === ""){
+            alert("All fields required!");
+            return;
+        }
+
+        if(!remail.value.includes("@")){
+            alert("Invalid email!");
+            return;
+        }
+
+        fetch("/api/auth/register",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                name:rname.value,
+                email:remail.value,
+                password:rpass.value
+            })
+        })
+        .then(res => res.text())
+        .then(data=>{
+            alert("Registered Successfully!");
+            showLogin();
+        });
+    }
+
+    // ================= LOGIN =================
+    function login(){
+        fetch("/api/auth/login",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                email:lemail.value,
+                password:lpass.value
+            })
+        })
+        .then(res=>res.json())
+        .then(data=>{
+
+    if(!data || !data.id){
+        alert("Invalid Login");
+        return;
+    }
+
+    userId = data.id;
+
+    alert("Login Success");
+
+    loginPage.style.display="none";
+    homePage.style.display="block";
+
+    loadContacts();
+});
+    }
+    // ========= new user ======================
+    function newContact(){
+    editId = null;
+
+    cname.value = "";
+    cphone.value = "";
+    cemail.value = "";
+    caddress.value = "";
+}
+
+    // ================= LOGOUT =================
+    function logout(){
+        userId = null;
+        homePage.style.display="none";
+        loginPage.style.display="block";
+    }
+
+    // ================= ADD / UPDATE =================
+    function addContact(){
+
+        if(cname.value==="" || cphone.value==="" || cemail.value===""){
+            alert("All fields required!");
+            return;
+        }
+
+        if(!/^[0-9]{10}$/.test(cphone.value)){
+            alert("Phone must be exactly 10 digits!");
+            return;
+        }
+
+        let url = "/api/contacts/"+userId;
+        let method = "POST";
+
+        if(editId){
+            url = "/api/contacts/"+editId;
+            method = "PUT";
+        }
+
+        fetch(url,{
+            method:method,
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                name:cname.value,
+                phone:cphone.value,
+                email:cemail.value,
+                address:caddress.value
+            })
+        })
+        .then(()=>{
+            editId = null;
+
+            cname.value="";
+            cphone.value="";
+            cemail.value="";
+            caddress.value="";
+
+            loadContacts();
+        });
+    }
+
+    // ================= LOAD CONTACTS =================
+    function loadContacts(){
+        fetch("/api/contacts/"+userId)
+        .then(res=>res.json())
+        .then(data=>{
+            list.innerHTML="";
+            data.forEach(c=>{
+                let li=document.createElement("li");
+                li.className="list-group-item d-flex justify-content-between";
+
+                li.innerHTML = `
+                    <div>
+                        <strong>${c.name}</strong><br>
+                        ${c.phone} | ${c.email} | ${c.address}
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-warning" onclick="edit(${c.id},'${c.name}','${c.phone}','${c.email}','${c.address}')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="del(${c.id})">Delete</button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        });
+    }
+
+    // ================= DELETE =================
+    function del(id){
+        fetch("/api/contacts/"+id,{method:"DELETE"})
+        .then(loadContacts);
+    }
+
+    // ================= EDIT =================
+    function edit(id,name,phone,email,address){
+        editId=id;
+
+        cname.value=name;
+        cphone.value=phone;
+        cemail.value=email;
+        caddress.value=address;
+    }
+
+</script>
+
+</body>
+</html>
