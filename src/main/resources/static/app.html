@@ -24,7 +24,7 @@
 
         <p class="mt-2 text-center">
             Already have account?
-            <a href="#" onclick="showLogin()">Login</a>
+            <a href="javascript:void(0)" onclick="showLogin()">Login</a>
         </p>
     </div>
 
@@ -87,6 +87,7 @@
 
     // ================= REGISTER =================
     function register(){
+        r.name.value
 
         if(rname.value === "" || remail.value === "" || rpass.value === ""){
             alert("All fields required!");
@@ -128,7 +129,8 @@
         .then(data=>{
 
     if(!data || !data.id){
-        alert("Invalid Login");
+        alert("User not found! please register first. ");
+        showRegister();
         return;
     }
 
