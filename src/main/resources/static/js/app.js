@@ -396,3 +396,4 @@ if (savedUser) {
     userInfo.textContent = `Logged in as ${currentUser.name} (${currentUser.email})`;
     loadContacts(false);
 }
+
