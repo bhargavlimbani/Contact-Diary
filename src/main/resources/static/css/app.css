@@ -1,0 +1,123 @@
+/* Main page layout */
+body {
+    background: #f5f7fb;
+}
+
+.app-shell {
+    max-width: 1080px;
+}
+
+.auth-card {
+    max-width: 460px;
+    margin: 0 auto;
+}
+
+.contact-card {
+    border: 1px solid #e6e9f0;
+}
+
+/* Print report layout */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    body {
+        background: white;
+        color: #111;
+        font-size: 11px;
+    }
+
+    .container {
+        max-width: 100%;
+        width: 100%;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .app-shell {
+        max-width: 100%;
+    }
+
+    #homePage > .d-flex {
+        display: block !important;
+        margin-bottom: 8px !important;
+        border-bottom: 1px solid #222;
+        padding-bottom: 6px;
+    }
+
+    #homePage h1 {
+        font-size: 20px;
+        margin: 0 0 2px;
+    }
+
+    #userInfo {
+        font-size: 11px;
+        margin: 0;
+    }
+
+    .row,
+    #list {
+        display: block !important;
+        margin: 0 !important;
+    }
+
+    #list {
+        column-count: 2;
+        column-gap: 10mm;
+    }
+
+    #list .col-12 {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        padding: 0 !important;
+        margin: 0 0 5px !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .contact-card {
+        border: 1px solid #999 !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .contact-card.border-warning {
+        border: 2px solid #111 !important;
+    }
+
+    .contact-card .card-body {
+        padding: 6px 8px !important;
+    }
+
+    .contact-card h3 {
+        font-size: 13px;
+        margin: 0 0 2px;
+    }
+
+    .contact-card p {
+        margin: 0 0 2px !important;
+        line-height: 1.25;
+    }
+
+    .badge {
+        border: 1px solid #777;
+        color: #111 !important;
+        background: transparent !important;
+        font-size: 9px;
+        padding: 1px 4px;
+    }
+}
