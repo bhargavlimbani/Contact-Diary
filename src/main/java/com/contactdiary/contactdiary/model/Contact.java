@@ -23,6 +23,11 @@ public class Contact {
     private String email;
     private String address;
 
+    private String relation;
+
+    private boolean favorite;
+
     @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 }

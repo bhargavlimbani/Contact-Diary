@@ -20,7 +20,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody User user) {
+    public String register(@Valid @RequestBody User user) {
         try {
             service.register(user);
             return "Registered Successfully!";
