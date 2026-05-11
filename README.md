@@ -67,6 +67,15 @@ spring.jpa.hibernate.ddl-auto=update
 server.port=${PORT:8083}
 ```
 
+Mail settings are also environment-variable based in production:
+
+```properties
+spring.mail.host=${MAIL_HOST:smtp.gmail.com}
+spring.mail.port=${MAIL_PORT:587}
+spring.mail.username=${MAIL_USERNAME:}
+spring.mail.password=${MAIL_PASSWORD:}
+```
+
 ## Run Project
 
 ```bash
@@ -87,14 +96,73 @@ http://localhost:8083/app.html
 
 ## Deploy (Live)
 
-Set these environment variables on your hosting platform (Render/Railway/Fly/etc):
+This project is ready to deploy on Render with Docker and an external Aiven MySQL database.
+
+### 1. Create MySQL on Aiven
+
+1. Create an **Aiven for MySQL** service.
+2. In Aiven Console, open your MySQL service and use **Quick connect**.
+3. Choose **Java** and copy the JDBC connection string, or collect:
+   - host
+   - port
+   - database name
+   - username
+   - password
+4. Create a database named `contact_diary` if you do not want to use `defaultdb`.
+
+Example Aiven JDBC URL:
+
+```text
+jdbc:mysql://HOST:PORT/contact_diary?sslmode=require
+```
+
+### 2. Push This Project to GitHub
+
+Render deploys from a Git repository. Push this project to GitHub, GitLab, or Bitbucket.
+
+### 3. Create a Render Web Service
+
+Render currently deploys Java/Spring Boot apps like this one with the **Docker** runtime.
+
+1. In Render, click **New +** -> **Web Service**.
+2. Connect your repository.
+3. Render should detect the included `render.yaml`, or you can configure manually:
+   - Runtime: `Docker`
+   - Instance type: `Free` or higher
+4. Deploy the service.
+
+### 4. Set Environment Variables on Render
+
+Set these variables in the Render dashboard:
 
 - `DB_URL`: JDBC URL. For Aiven MySQL (SSL required), example:
-  - `jdbc:mysql://<HOST>:<PORT>/<DB_NAME>?sslMode=REQUIRED`
+  - `jdbc:mysql://<HOST>:<PORT>/<DB_NAME>?sslmode=require`
 - `DB_USERNAME`
 - `DB_PASSWORD`
-- `DB_SSL_MODE`: `REQUIRED` (or leave empty if included in `DB_URL`)
-- `PORT`: provided by host (the app reads it automatically)
+- `MAIL_HOST`
+- `MAIL_PORT`
+- `MAIL_USERNAME`
+- `MAIL_PASSWORD`
+- `MAIL_SMTP_AUTH`
+- `MAIL_SMTP_STARTTLS_ENABLE`
+
+Notes:
+
+- Render provides `PORT` automatically for web services.
+- Aiven documentation shows Java/MySQL connections using SSL in the JDBC URL.
+- If you do not want email features yet, leave the mail variables empty, but registration OTP and password reset emails will not send successfully.
+
+### 5. Open the Live App
+
+After the deploy finishes, open:
+
+```text
+https://YOUR-RENDER-SERVICE.onrender.com/app.html
+```
+
+### Important Security Note
+
+Do not keep real Gmail credentials in source code. This project now reads mail and database secrets from environment variables instead.
 
 ## Test Cases
 
