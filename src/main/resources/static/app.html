@@ -11,33 +11,77 @@
 
 <main class="container app-shell py-4 py-md-5">
     <section id="authSection" class="auth-card card border-0 shadow-sm no-print">
-        <div class="card-body p-4">
-            <h1 class="h3 text-center mb-4">Contact Diary</h1>
+        <div class="card-body p-4 p-md-5">
+            <div class="auth-brand">
+                <p class="auth-eyebrow mb-2">Secure Personal Directory</p>
+                <h1 class="auth-title mb-2">Contact Diary</h1>
+                <p class="auth-subtitle mb-0">Manage your contacts with one simple, secure workspace.</p>
+            </div>
+            <div id="authMessage" class="alert d-none"></div>
 
-            <div id="registerPage">
-                <h2 class="h5 mb-3">Create Account</h2>
-                <form id="registerForm" novalidate>
+            <div id="registerPage" class="auth-view">
+                <div class="auth-panel">
+                    <h2 class="h5 mb-1">Create Account</h2>
+                    <p class="auth-panel-text mb-3">Create your account and verify your email with an OTP.</p>
+                </div>
+                <form id="registerForm" class="auth-form" novalidate>
                     <input class="form-control mb-2" id="rname" placeholder="Name" required>
                     <input class="form-control mb-2" id="remail" type="email" placeholder="Email" required>
                     <input class="form-control mb-3" id="rpass" type="password" placeholder="Password" required minlength="4">
                     <button class="btn btn-primary w-100" type="submit">Register</button>
                 </form>
-                <p class="mt-3 mb-0 text-center">
+                <form id="verifyRegistrationForm" class="auth-form auth-subform mt-3" style="display:none;" novalidate>
+                    <input class="form-control mb-2" id="registrationOtp" placeholder="Enter registration OTP" maxlength="6" required>
+                    <button class="btn btn-outline-primary w-100" type="submit">Verify OTP</button>
+                </form>
+                <p class="auth-switch mt-3 mb-0 text-center">
                     Already have account?
                     <button class="btn btn-link p-0 align-baseline" type="button" onclick="showLogin()">Login</button>
                 </p>
             </div>
 
-            <div id="loginPage" style="display:none;">
-                <h2 class="h5 mb-3">Login</h2>
-                <form id="loginForm" novalidate>
+            <div id="loginPage" class="auth-view" style="display:none;">
+                <div class="auth-panel">
+                    <h2 class="h5 mb-1">Welcome Back</h2>
+                    <p class="auth-panel-text mb-3">Sign in to access your saved contacts and tools.</p>
+                </div>
+                <form id="loginForm" class="auth-form" novalidate>
                     <input class="form-control mb-2" id="lemail" type="email" placeholder="Email" required>
                     <input class="form-control mb-3" id="lpass" type="password" placeholder="Password" required>
                     <button class="btn btn-success w-100" type="submit">Login</button>
                 </form>
-                <p class="mt-3 mb-0 text-center">
+                <div class="mt-3 text-center auth-inline-link">
+                    <button class="btn btn-link p-0 align-baseline" type="button" onclick="toggleForgotPassword()">Forgot password?</button>
+                </div>
+                <form id="forgotPasswordForm" class="auth-form auth-subform mt-3" style="display:none;" novalidate>
+                    <input class="form-control mb-2" id="forgotEmail" type="email" placeholder="Enter your registered email" required>
+                    <button class="btn btn-outline-primary w-100" type="submit">Send OTP And Reset Link</button>
+                </form>
+                <form id="resetPasswordOtpForm" class="auth-form auth-subform mt-3" style="display:none;" novalidate>
+                    <input class="form-control mb-2" id="resetOtpEmail" type="email" placeholder="Registered email" required>
+                    <input class="form-control mb-2" id="resetOtp" placeholder="Reset OTP" maxlength="6" required>
+                    <input class="form-control mb-2" id="otpNewPassword" type="password" placeholder="New password" required minlength="4">
+                    <input class="form-control mb-3" id="otpConfirmPassword" type="password" placeholder="Confirm password" required minlength="4">
+                    <button class="btn btn-outline-success w-100" type="submit">Reset With OTP</button>
+                </form>
+                <p class="auth-switch mt-3 mb-0 text-center">
                     New user?
                     <button class="btn btn-link p-0 align-baseline" type="button" onclick="showRegister()">Register</button>
+                </p>
+            </div>
+
+            <div id="resetPasswordPage" class="auth-view" style="display:none;">
+                <div class="auth-panel">
+                    <h2 class="h5 mb-1">Reset Password</h2>
+                    <p class="auth-panel-text mb-3">Create a fresh password to recover access to your account.</p>
+                </div>
+                <form id="resetPasswordForm" class="auth-form" novalidate>
+                    <input class="form-control mb-2" id="newPassword" type="password" placeholder="New password" required minlength="4">
+                    <input class="form-control mb-3" id="confirmPassword" type="password" placeholder="Confirm password" required minlength="4">
+                    <button class="btn btn-primary w-100" type="submit">Reset Password</button>
+                </form>
+                <p class="auth-switch mt-3 mb-0 text-center">
+                    <button class="btn btn-link p-0 align-baseline" type="button" onclick="showLoginFromReset()">Back to Login</button>
                 </p>
             </div>
         </div>

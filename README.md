@@ -60,11 +60,11 @@ CREATE DATABASE contact_diary;
 The application uses this configuration in `src/main/resources/application.properties`:
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/contact_diary
-spring.datasource.username=root
-spring.datasource.password=
+spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/contact_diary}
+spring.datasource.username=${DB_USERNAME:root}
+spring.datasource.password=${DB_PASSWORD:}
 spring.jpa.hibernate.ddl-auto=update
-server.port=8081
+server.port=${PORT:8083}
 ```
 
 ## Run Project
@@ -82,8 +82,19 @@ mvnw.cmd spring-boot:run
 Open:
 
 ```text
-http://localhost:8081/app.html
+http://localhost:8083/app.html
 ```
+
+## Deploy (Live)
+
+Set these environment variables on your hosting platform (Render/Railway/Fly/etc):
+
+- `DB_URL`: JDBC URL. For Aiven MySQL (SSL required), example:
+  - `jdbc:mysql://<HOST>:<PORT>/<DB_NAME>?sslMode=REQUIRED`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `DB_SSL_MODE`: `REQUIRED` (or leave empty if included in `DB_URL`)
+- `PORT`: provided by host (the app reads it automatically)
 
 ## Test Cases
 

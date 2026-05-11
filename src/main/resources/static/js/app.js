@@ -3,6 +3,8 @@ let currentUser = null;
 let editId = null;
 let contacts = [];
 let activeView = "none";
+let resetToken = null;
+let pendingRegistrationEmail = "";
 
 // Validation rules
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -10,7 +12,11 @@ const phoneRegex = /^[0-9]{10}$/;
 
 // Event listeners
 document.getElementById("registerForm").addEventListener("submit", register);
+document.getElementById("verifyRegistrationForm").addEventListener("submit", verifyRegistrationOtp);
 document.getElementById("loginForm").addEventListener("submit", login);
+document.getElementById("forgotPasswordForm").addEventListener("submit", forgotPassword);
+document.getElementById("resetPasswordOtpForm").addEventListener("submit", resetPasswordWithOtp);
+document.getElementById("resetPasswordForm").addEventListener("submit", resetPassword);
 document.getElementById("contactForm").addEventListener("submit", saveContact);
 document.getElementById("searchForm").addEventListener("submit", searchContacts);
 document.getElementById("searchName").addEventListener("input", debounce(searchContacts, 300));
@@ -18,19 +24,52 @@ document.getElementById("searchName").addEventListener("input", debounce(searchC
 // Authentication view controls
 function showLogin() {
     registerPage.style.display = "none";
+    resetPasswordPage.style.display = "none";
     loginPage.style.display = "block";
+    forgotPasswordForm.style.display = "none";
+    resetPasswordOtpForm.style.display = "none";
+    verifyRegistrationForm.style.display = "none";
 }
 
 function showRegister() {
     loginPage.style.display = "none";
+    resetPasswordPage.style.display = "none";
     registerPage.style.display = "block";
+    forgotPasswordForm.style.display = "none";
+    resetPasswordOtpForm.style.display = "none";
+}
+
+function showLoginFromReset() {
+    resetToken = null;
+    window.history.replaceState({}, document.title, "/app.html");
+    document.getElementById("resetPasswordForm").reset();
+    showLogin();
+}
+
+function toggleForgotPassword() {
+    const shouldShow = forgotPasswordForm.style.display === "none";
+    forgotPasswordForm.style.display = shouldShow ? "block" : "none";
+    resetPasswordOtpForm.style.display = shouldShow ? "block" : "none";
+    if (shouldShow) {
+        resetOtpEmail.value = lemail.value.trim();
+    }
+}
+
+function showResetPassword() {
+    registerPage.style.display = "none";
+    loginPage.style.display = "none";
+    resetPasswordPage.style.display = "block";
 }
 
 function showMessage(text, type = "success") {
-    message.className = `alert alert-${type} no-print`;
-    message.textContent = text;
-    message.classList.remove("d-none");
-    setTimeout(() => message.classList.add("d-none"), 3000);
+    const target = homePage.style.display === "block" ? message : authMessage;
+    target.className = `alert alert-${type}`;
+    if (target === message) {
+        target.classList.add("no-print");
+    }
+    target.textContent = text;
+    target.classList.remove("d-none");
+    setTimeout(() => target.classList.add("d-none"), 3000);
 }
 
 function validateEmail(value) {
@@ -57,13 +96,57 @@ function register(event) {
     })
         .then(res => res.text())
         .then(data => {
-            alert(data);
-            if (data.includes("Registered")) {
-                // Event listeners
-document.getElementById("registerForm").reset();
-                showLogin();
+            if (data.includes("OTP sent")) {
+                pendingRegistrationEmail = remail.value.trim();
+                verifyRegistrationForm.style.display = "block";
+                showMessage(data);
+                return;
             }
+            alert(data);
         });
+}
+
+function verifyRegistrationOtp(event) {
+    event.preventDefault();
+
+    if (!pendingRegistrationEmail || !registrationOtp.value.trim()) {
+        showMessage("Enter the OTP sent to your email.", "danger");
+        return;
+    }
+
+    fetch("/api/auth/verify-registration", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            email: pendingRegistrationEmail,
+            otp: registrationOtp.value.trim()
+        })
+    })
+        .then(res => res.text())
+        .then(text => {
+            if (!text) {
+                showMessage("Registration verification failed.", "danger");
+                return;
+            }
+
+            if (text.startsWith("{")) {
+                const data = JSON.parse(text);
+                currentUser = data;
+                sessionStorage.setItem("contactDiaryUser", JSON.stringify(data));
+                authSection.style.display = "none";
+                homePage.style.display = "block";
+                userInfo.textContent = `Logged in as ${data.name} (${data.email})`;
+                document.getElementById("registerForm").reset();
+                document.getElementById("verifyRegistrationForm").reset();
+                verifyRegistrationForm.style.display = "none";
+                pendingRegistrationEmail = "";
+                loadContacts(false);
+                return;
+            }
+
+            showMessage(text, "danger");
+        })
+        .catch(() => showMessage("Registration verification failed.", "danger"));
 }
 
 function login(event) {
@@ -99,6 +182,119 @@ function login(event) {
         });
 }
 
+function forgotPassword(event) {
+    event.preventDefault();
+
+    const email = forgotEmail.value.trim();
+    if (!validateEmail(email)) {
+        showMessage("Enter a valid registered email.", "danger");
+        return;
+    }
+
+    fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({email})
+    })
+        .then(async res => ({
+            ok: res.ok,
+            text: await res.text()
+        }))
+        .then(messageText => {
+            resetOtpEmail.value = email;
+            showMessage(messageText.text, messageText.ok ? "success" : "danger");
+        })
+        .catch(() => showMessage("Unable to send reset link right now.", "danger"));
+}
+
+function resetPasswordWithOtp(event) {
+    event.preventDefault();
+
+    const email = resetOtpEmail.value.trim();
+    const otp = resetOtp.value.trim();
+    const password = otpNewPassword.value;
+    const confirm = otpConfirmPassword.value;
+
+    if (!validateEmail(email) || !otp) {
+        showMessage("Enter your email and reset OTP.", "danger");
+        return;
+    }
+
+    if (password.length < 4) {
+        showMessage("Password must be at least 4 characters.", "danger");
+        return;
+    }
+
+    if (password !== confirm) {
+        showMessage("Passwords do not match.", "danger");
+        return;
+    }
+
+    fetch("/api/auth/reset-password-otp", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            email,
+            otp,
+            password
+        })
+    })
+        .then(res => res.text())
+        .then(messageText => {
+            if (messageText.includes("successful")) {
+                document.getElementById("forgotPasswordForm").reset();
+                document.getElementById("resetPasswordOtpForm").reset();
+                forgotPasswordForm.style.display = "none";
+                resetPasswordOtpForm.style.display = "none";
+                showMessage(messageText);
+                return;
+            }
+            showMessage(messageText, "danger");
+        })
+        .catch(() => showMessage("Password reset failed.", "danger"));
+}
+
+function resetPassword(event) {
+    event.preventDefault();
+
+    const password = newPassword.value;
+    const confirm = confirmPassword.value;
+
+    if (!resetToken) {
+        showMessage("Reset link is missing or invalid.", "danger");
+        return;
+    }
+
+    if (password.length < 4) {
+        showMessage("Password must be at least 4 characters.", "danger");
+        return;
+    }
+
+    if (password !== confirm) {
+        showMessage("Passwords do not match.", "danger");
+        return;
+    }
+
+    fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            token: resetToken,
+            password
+        })
+    })
+        .then(res => res.text())
+        .then(messageText => {
+            if (messageText.includes("successful")) {
+                showMessage(messageText);
+                showLoginFromReset();
+                return;
+            }
+            showMessage(messageText, "danger");
+        })
+        .catch(() => showMessage("Password reset failed.", "danger"));
+}
+
 function logout() {
     currentUser = null;
     editId = null;
@@ -108,6 +304,7 @@ function logout() {
     authSection.style.display = "block";
     loginPage.style.display = "block";
     registerPage.style.display = "none";
+    resetPasswordPage.style.display = "none";
     document.getElementById("loginForm").reset();
 }
 
@@ -389,11 +586,17 @@ function debounce(callback, delay) {
 }
 
 const savedUser = sessionStorage.getItem("contactDiaryUser");
-if (savedUser) {
+const queryParams = new URLSearchParams(window.location.search);
+resetToken = queryParams.get("resetToken");
+
+if (resetToken) {
+    showResetPassword();
+}
+
+if (savedUser && !resetToken) {
     currentUser = JSON.parse(savedUser);
     authSection.style.display = "none";
     homePage.style.display = "block";
     userInfo.textContent = `Logged in as ${currentUser.name} (${currentUser.email})`;
     loadContacts(false);
 }
-
